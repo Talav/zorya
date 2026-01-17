@@ -1,0 +1,121 @@
+site_name: Zorya
+site_url: https://zorya.rocks/
+site_description: A Go HTTP API framework for building type-safe REST APIs
+repo_url: https://github.com/talav/talav
+repo_name: talav/talav
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+  language: en
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.mark
+  - attr_list
+  - def_list
+  - footnotes
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Home: index.md
+  - Introduction:
+    - Overview: introduction/overview.md
+    - Why Zorya: introduction/why-zorya.md
+    - Installation: introduction/installation.md
+    - Architecture: introduction/architecture.md
+  - Tutorial:
+    - Quick Start: tutorial/quick-start.md
+    - First API: tutorial/first-api.md
+    - Adding Validation: tutorial/validation.md
+    - Adding Security: tutorial/security.md
+    - Testing Your API: tutorial/testing.md
+  - Features:
+    - Router Adapters: features/router-adapters.md
+    - Requests:
+      - Input Structs: features/requests/input-structs.md
+      - Validation: features/requests/validation.md
+      - File Uploads: features/requests/file-uploads.md
+      - Limits: features/requests/limits.md
+    - Responses:
+      - Output Structs: features/responses/output-structs.md
+      - Errors: features/responses/errors.md
+      - Streaming: features/responses/streaming.md
+      - Transformers: features/responses/transformers.md
+    - Content Negotiation: features/content-negotiation.md
+    - Security:
+      - Overview: features/security/overview.md
+      - Authentication: features/security/authentication.md
+      - Authorization: features/security/authorization.md
+      - Resource-Based Access: features/security/resource-based.md
+    - Middleware: features/middleware.md
+    - Groups: features/groups.md
+    - Conditional Requests: features/conditional-requests.md
+    - Default Values: features/defaults.md
+    - OpenAPI:
+      - Overview: features/openapi/overview.md
+      - Documentation UI: features/openapi/documentation-ui.md
+      - Schema Generation: features/openapi/schema-generation.md
+    - Metadata:
+      - Overview: features/metadata/overview.md
+      - Tags Reference: features/metadata/tags-reference.md
+  - How-To:
+    - Custom Validators: how-to/custom-validators.md
+    - Custom Formats: how-to/custom-formats.md
+    - Custom Enforcers: how-to/custom-enforcers.md
+    - Graceful Shutdown: how-to/graceful-shutdown.md
+    - FX Integration: how-to/fx-integration.md
+    - Testing: how-to/testing.md
+  - Reference:
+    - API Reference: reference/api.md
+    - Context Interface: reference/context.md
+    - Types: reference/types.md
+    - Constants: reference/constants.md
+  - Related Packages:
+    - Schema: packages/schema.md
+    - Negotiation: packages/negotiation.md
+    - Validator: packages/validator.md
+    - Security: packages/security.md
+    - Conditional: packages/conditional.md
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/talav/talav
