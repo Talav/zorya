@@ -32,7 +32,7 @@ func TestFiberAdapter_HeadersPropagate(t *testing.T) {
 	req.Header.Set("Accept", "application/json")
 	resp, err := app.Test(req, -1)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	ct := resp.Header.Get("Content-Type")

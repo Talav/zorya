@@ -106,7 +106,7 @@ func getUser(_ context.Context, input *GetUserInput) (*GetUserOutput, error) {
 
 	// Check If-None-Match (read path: isWrite=false → 304 on match)
 	// Pass zero time.Time — a real implementation would store the modification time.
-	if err := input.Params.CheckPreconditions(u.ETag, time.Time{}, false); err != nil {
+	if err := input.CheckPreconditions(u.ETag, time.Time{}, false); err != nil {
 		return nil, err
 	}
 
@@ -123,7 +123,7 @@ func updateUser(_ context.Context, input *UpdateUserInput) (*UpdateUserOutput, e
 	}
 
 	// Check If-Match (write path: isWrite=true → 412 on mismatch)
-	if err := input.Params.CheckPreconditions(u.ETag, time.Time{}, true); err != nil {
+	if err := input.CheckPreconditions(u.ETag, time.Time{}, true); err != nil {
 		return nil, err
 	}
 

@@ -3,7 +3,6 @@ package zorya
 import (
 	"encoding/json"
 	"reflect"
-	"regexp"
 )
 
 // ContentTypeProvider allows types to override their content type.
@@ -1534,11 +1533,7 @@ type Schema struct {
 	// OpenAPI specific fields
 	Discriminator *Discriminator
 
-	//nolint:unused // Reserved for future pattern validation caching
-	patternRe     *regexp.Regexp
-	requiredMap   map[string]bool
-	propertyNames []string
-	hidden        bool
+	hidden bool
 }
 
 // MarshalJSON marshals the schema into JSON, respecting the `Extensions` map

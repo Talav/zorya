@@ -56,13 +56,17 @@ func streamEvents(ctx context.Context, _ *struct{}) (*EventStreamOutput, error) 
 				return nil
 			case t := <-ticker.C:
 				event := fmt.Sprintf(`{"seq":%d,"time":"%s"}`, i, t.Format(time.RFC3339))
-				fmt.Fprintf(w, "data: %s\n\n", event)
+				if _, err := fmt.Fprintf(w, "data: %s\n\n", event); err != nil {
+					return err
+				}
 				flusher.Flush()
 			}
 		}
 
 		// Signal end-of-stream
-		fmt.Fprintf(w, "event: done\ndata: {}\n\n")
+		if _, err := fmt.Fprintf(w, "event: done\ndata: {}\n\n"); err != nil {
+			return err
+		}
 		flusher.Flush()
 		return nil
 	}
@@ -79,7 +83,7 @@ func landingPage(_ context.Context, _ *struct{}) (*PageOutput, error) {
 	out := &PageOutput{}
 	out.Body = func(w http.ResponseWriter) error {
 		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprint(w, `<!DOCTYPE html><html><body>
+		if _, err := fmt.Fprint(w, `<!DOCTYPE html><html><body>
 <h2>SSE Demo</h2>
 <ul id="log"></ul>
 <script>
@@ -90,7 +94,9 @@ es.onmessage = e => {
     document.getElementById("log").appendChild(li);
 };
 es.addEventListener("done", () => es.close());
-</script></body></html>`)
+</script></body></html>`); err != nil {
+			return err
+		}
 		return nil
 	}
 	return out, nil
