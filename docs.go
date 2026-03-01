@@ -19,10 +19,9 @@ func registerDocsEndpoint(a *api) {
 
 	openAPIPath := a.config.OpenAPIPath
 	if openAPIPath == "" {
-		openAPIPath = "/openapi"
+		openAPIPath = "/openapi.json"
 	}
-
-	htmlContent := generateDocsHTML(openAPIPath+".json", title)
+	htmlContent := generateDocsHTML(openAPIPath, title)
 
 	a.adapter.Handle(&BaseRoute{
 		Method: http.MethodGet,

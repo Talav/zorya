@@ -1,21 +1,22 @@
 package zorya
 
 import (
+	"net/http"
 	"reflect"
 
+	"github.com/talav/openapi/metadata"
 	"github.com/talav/schema"
-	"github.com/talav/zorya/metadata"
 )
 
+// NewMetadata returns a schema.Metadata configured with Zorya's tag parsers (schema, body, openapi, validate, default, requires).
 func NewMetadata() *schema.Metadata {
 	return schema.NewMetadata(schema.NewTagParserRegistry(
 		schema.WithTagParser("schema", schema.ParseSchemaTag, conditionalSchemaDefault),
 		schema.WithTagParser("body", schema.ParseBodyTag),
 		schema.WithTagParser("openapi", metadata.ParseOpenAPITag),
-		schema.WithTagParser("openapiStruct", metadata.ParseOpenAPIStructTag),
 		schema.WithTagParser("validate", metadata.ParseValidateTag),
 		schema.WithTagParser("default", metadata.ParseDefaultTag),
-		schema.WithTagParser("dependentRequired", metadata.ParseDependentRequiredTag),
+		schema.WithTagParser("requires", metadata.ParseRequiresTag),
 	))
 }
 
@@ -31,6 +32,7 @@ func conditionalSchemaDefault(field reflect.StructField, index int) any {
 }
 
 // FindBodyField finds the field with "body" tag in the struct metadata.
+// If none, falls back to a field named "Body" with type func(http.ResponseWriter) error (streaming).
 // Returns nil if no body field is found.
 func FindBodyField(structMeta *schema.StructMetadata) *schema.FieldMetadata {
 	for i := range structMeta.Fields {
@@ -38,6 +40,25 @@ func FindBodyField(structMeta *schema.StructMetadata) *schema.FieldMetadata {
 			return &structMeta.Fields[i]
 		}
 	}
-
+	// Fallback: streaming body func(w http.ResponseWriter) error without body tag
+	for i := range structMeta.Fields {
+		f := &structMeta.Fields[i]
+		if f.StructFieldName == "Body" && isStreamingBodyFunc(f.Type) {
+			return f
+		}
+	}
 	return nil
+}
+
+// isStreamingBodyFunc reports whether t is func(http.ResponseWriter) error.
+func isStreamingBodyFunc(t reflect.Type) bool {
+	if t == nil || t.Kind() != reflect.Func {
+		return false
+	}
+	if t.NumIn() != 1 || t.NumOut() != 1 {
+		return false
+	}
+	httpResponseWriterType := reflect.TypeOf((*http.ResponseWriter)(nil)).Elem()
+	errorType := reflect.TypeOf((*error)(nil)).Elem()
+	return t.In(0).Implements(httpResponseWriterType) && t.Out(0).Implements(errorType)
 }

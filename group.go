@@ -45,6 +45,7 @@ func NewGroup(api API, prefixes ...string) *Group {
 	return group
 }
 
+// Adapter returns the group's adapter, which applies group modifiers before delegating to the underlying API adapter.
 func (g *Group) Adapter() Adapter {
 	return g.adapter
 }
@@ -94,10 +95,11 @@ func (g *Group) mergeSecurity(route *BaseRoute) {
 // copySecurity creates a deep copy of the group's security configuration.
 func (g *Group) copySecurity() *RouteSecurity {
 	return &RouteSecurity{
-		Roles:       append([]string(nil), g.security.Roles...),
-		Permissions: append([]string(nil), g.security.Permissions...),
-		Resource:    g.security.Resource,
-		Action:      g.security.Action,
+		Roles:            append([]string(nil), g.security.Roles...),
+		Permissions:      append([]string(nil), g.security.Permissions...),
+		Resource:         g.security.Resource,
+		Action:           g.security.Action,
+		ResourceResolver: g.security.ResourceResolver,
 	}
 }
 
@@ -114,6 +116,9 @@ func (g *Group) mergeSecurityFields(routeSec *RouteSecurity) {
 	}
 	if routeSec.Action == "" && g.security.Action != "" {
 		routeSec.Action = g.security.Action
+	}
+	if routeSec.ResourceResolver == nil && g.security.ResourceResolver != nil {
+		routeSec.ResourceResolver = g.security.ResourceResolver
 	}
 }
 
@@ -142,6 +147,7 @@ func (g *Group) UseMiddleware(middlewares ...Middleware) {
 	g.middlewares = append(g.middlewares, middlewares...)
 }
 
+// Middlewares returns the combined middlewares from the parent API and this group.
 func (g *Group) Middlewares() Middlewares {
 	m := append(Middlewares{}, g.API.Middlewares()...)
 

@@ -99,22 +99,42 @@ func (a *FiberAdapter) ExtractRouterParams(r *http.Request, route *zorya.BaseRou
 }
 
 type fiberResponseWriter struct {
-	ctx *fiber.Ctx
+	ctx    *fiber.Ctx
+	header http.Header // cached map; Header() returns this so handlers' Set/Add take effect
 }
 
 func (w *fiberResponseWriter) Header() http.Header {
-	h := make(http.Header)
-	w.ctx.Response().Header.VisitAll(func(key, value []byte) {
-		h.Add(string(key), string(value))
-	})
+	if w.header == nil {
+		w.header = make(http.Header)
+		w.ctx.Response().Header.VisitAll(func(key, value []byte) {
+			w.header.Add(string(key), string(value))
+		})
+	}
+	return w.header
+}
 
-	return h
+func (w *fiberResponseWriter) syncHeaders() {
+	if w.header == nil {
+		return
+	}
+	resp := w.ctx.Response()
+	for k, v := range w.header {
+		if len(v) == 0 {
+			continue
+		}
+		resp.Header.Set(k, v[0])
+		for i := 1; i < len(v); i++ {
+			resp.Header.Add(k, v[i])
+		}
+	}
 }
 
 func (w *fiberResponseWriter) Write(data []byte) (int, error) {
+	w.syncHeaders()
 	return w.ctx.Write(data)
 }
 
 func (w *fiberResponseWriter) WriteHeader(statusCode int) {
+	w.syncHeaders()
 	w.ctx.Status(statusCode)
 }

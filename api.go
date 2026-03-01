@@ -2,7 +2,6 @@ package zorya
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/talav/mapstructure"
 	"github.com/talav/negotiation"
+	"github.com/talav/openapi"
 	"github.com/talav/schema"
 )
 
@@ -63,6 +63,9 @@ type Validator interface {
 // bypass transformers and are handled separately.
 type Transformer func(r *http.Request, status int, result any) (any, error)
 
+// API is the core interface for a Zorya API. It provides request/response handling,
+// content negotiation, validation, and OpenAPI spec generation.
+//
 //nolint:interfacebloat // API is the core framework interface; 14 methods is reasonable for a complete API contract
 type API interface {
 	// Adapter returns the router adapter for this API, providing a generic
@@ -77,6 +80,7 @@ type API interface {
 	// Middleware functions take an http.Handler and return an http.Handler.
 	UseMiddleware(middlewares ...Middleware)
 
+	// Codec returns the schema codec used for request decoding and response encoding.
 	Codec() Codec
 
 	// Metadata returns the schema metadata instance used by this API.
@@ -106,32 +110,28 @@ type API interface {
 	// until the server starts.
 	OpenAPI() *OpenAPI
 
-	// Registry returns the registry for this API.
-	Registry() Registry
-
-	RequestSchemaExtractor() *requestSchemaExtractor
-	ResponseSchemaExtractor() *ResponseSchemaExtractor
+	// addOperationToState registers an operation for OpenAPI generation.
+	// Internal method used during route registration.
+	addOperationToState(op openapi.Operation)
 }
 
 // Option configures an API.
 type Option func(*api)
 
 type api struct {
-	adapter                 Adapter
-	middlewares             Middlewares
-	codec                   *schema.Codec
-	metadata                *schema.Metadata
-	formats                 map[string]Format
-	formatKeys              []string
-	defaultFormat           string
-	negotiator              *negotiation.Negotiator
-	validator               Validator
-	transformers            []Transformer
-	config                  *Config
-	openAPI                 *OpenAPI
-	registry                Registry
-	requestSchemaExtractor  *requestSchemaExtractor
-	responseSchemaExtractor *ResponseSchemaExtractor
+	adapter          Adapter
+	middlewares      Middlewares
+	codec            *schema.Codec
+	metadata         *schema.Metadata
+	formats          map[string]Format
+	formatKeys       []string
+	defaultFormat    string
+	negotiator       *negotiation.Negotiator
+	validator        Validator
+	transformers     []Transformer
+	config           *Config
+	openAPI          *OpenAPI
+	openapiState     *openapiState // Uses github.com/talav/openapi for schema generation
 }
 
 func (a *api) Adapter() Adapter {
@@ -163,16 +163,95 @@ func (a *api) OpenAPI() *OpenAPI {
 	return a.openAPI
 }
 
-func (a *api) RequestSchemaExtractor() *requestSchemaExtractor {
-	return a.requestSchemaExtractor
+func (a *api) addOperationToState(op openapi.Operation) {
+	a.openapiState.AddOperation(op)
 }
 
-func (a *api) ResponseSchemaExtractor() *ResponseSchemaExtractor {
-	return a.responseSchemaExtractor
-}
+// buildOpenapiOperation converts Zorya operation metadata to openapi.Operation.
+// This is called during route registration to build the operation immediately.
+func buildOpenapiOperation(method, path string, inputType, outputType reflect.Type, route *BaseRoute) openapi.Operation {
+	// Build operation options
+	var opts []openapi.OperationDocOption
 
-func (a *api) Registry() Registry {
-	return a.registry
+	// Add operation metadata
+	if route.Operation != nil {
+		if route.Operation.Summary != "" {
+			opts = append(opts, openapi.WithSummary(route.Operation.Summary))
+		}
+		if route.Operation.Description != "" {
+			opts = append(opts, openapi.WithDescription(route.Operation.Description))
+		}
+		if route.Operation.OperationID != "" {
+			opts = append(opts, openapi.WithOperationID(route.Operation.OperationID))
+		}
+		if len(route.Operation.Tags) > 0 {
+			opts = append(opts, openapi.WithTags(route.Operation.Tags...))
+		}
+		if route.Operation.Deprecated {
+			opts = append(opts, openapi.WithDeprecated())
+		}
+	}
+
+	// Add request schema if input type is provided
+	if inputType != nil && inputType.Kind() == reflect.Struct {
+		inputInstance := reflect.New(inputType).Elem().Interface()
+		opts = append(opts, openapi.WithRequest(inputInstance))
+	}
+
+	// Add response schema if output type is provided
+	if outputType != nil && outputType.Kind() == reflect.Struct {
+		outputInstance := reflect.New(outputType).Elem().Interface()
+		status := route.DefaultStatus
+		if status == 0 {
+			status = 200
+		}
+		opts = append(opts, openapi.WithResponse(status, outputInstance))
+	}
+
+	// Add error responses
+	errorInstance := ErrorModel{}
+	if len(route.Errors) > 0 {
+		for _, code := range route.Errors {
+			opts = append(opts, openapi.WithResponse(code, errorInstance))
+		}
+	}
+
+	// Add automatic error responses (422 if has input, 500 always)
+	if inputType != nil {
+		opts = append(opts, openapi.WithResponse(422, errorInstance))
+	}
+	opts = append(opts, openapi.WithResponse(500, errorInstance))
+
+	// Add security requirements
+	if route.Security != nil {
+		scopes := make([]string, 0, len(route.Security.Roles)+len(route.Security.Permissions))
+		scopes = append(scopes, route.Security.Roles...)
+		scopes = append(scopes, route.Security.Permissions...)
+		opts = append(opts, openapi.WithSecurity("bearerAuth", scopes...))
+	}
+
+	// Create operation with appropriate HTTP method
+	var op openapi.Operation
+	switch method {
+	case http.MethodGet:
+		op = openapi.GET(path, opts...)
+	case http.MethodPost:
+		op = openapi.POST(path, opts...)
+	case http.MethodPut:
+		op = openapi.PUT(path, opts...)
+	case http.MethodPatch:
+		op = openapi.PATCH(path, opts...)
+	case http.MethodDelete:
+		op = openapi.DELETE(path, opts...)
+	case http.MethodHead:
+		op = openapi.HEAD(path, opts...)
+	case http.MethodOptions:
+		op = openapi.OPTIONS(path, opts...)
+	default:
+		op = openapi.GET(path, opts...) // Fallback
+	}
+
+	return op
 }
 
 // Transform runs all transformers on the response value in the order they were added.
@@ -275,11 +354,6 @@ func NewAPI(adapter Adapter, opts ...Option) API {
 
 	initializeOpenAPI(a)
 
-	// Create registry for OpenAPI schema generation
-	if a.registry == nil {
-		a.registry = NewMapRegistry("#/components/schemas/", DefaultSchemaNamer, a.metadata)
-	}
-
 	if a.config == nil {
 		a.config = DefaultConfig()
 	}
@@ -295,8 +369,8 @@ func NewAPI(adapter Adapter, opts ...Option) API {
 		}
 	}
 
-	a.requestSchemaExtractor = NewRequestSchemaExtractor(a.registry, a.metadata)
-	a.responseSchemaExtractor = NewResponseSchemaExtractor(a.registry, newSchemaBuilder(a.registry, a.metadata), a.metadata)
+	// Initialize the openapi state that uses github.com/talav/openapi library
+	a.openapiState = newOpenapiState(a)
 
 	registerOpenAPIEndpoint(a)
 	registerDocsEndpoint(a)
@@ -326,21 +400,27 @@ func registerOpenAPIEndpoint(a *api) {
 		return
 	}
 
-	var specJSON []byte
 	a.adapter.Handle(&BaseRoute{
 		Method: http.MethodGet,
 		Path:   a.config.OpenAPIPath,
 	}, func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/vnd.oai.openapi+json")
-		if specJSON == nil {
-			var err error
-			specJSON, err = json.Marshal(a.openAPI)
-			if err != nil {
-				WriteErr(a, r, w, http.StatusInternalServerError, "failed to marshal OpenAPI spec", err)
-
-				return
-			}
+		// Generate spec with caching and ETag support
+		specJSON, etag, err := a.openapiState.GenerateSpec(r.Context())
+		if err != nil {
+			WriteErr(a, r, w, http.StatusInternalServerError, "failed to generate OpenAPI spec", err)
+			return
 		}
+
+		// Set ETag header
+		w.Header().Set("ETag", etag)
+
+		// Check If-None-Match for 304 Not Modified
+		if match := r.Header.Get("If-None-Match"); match == etag {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/vnd.oai.openapi+json")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(specJSON)
 	})
@@ -414,12 +494,14 @@ func WithDefaultFormat(format string) Option {
 	}
 }
 
+// WithConfig sets the API configuration (OpenAPI path, docs path, default format, etc.).
 func WithConfig(config *Config) Option {
 	return func(a *api) {
 		a.config = config
 	}
 }
 
+// WithOpenAPI sets a custom OpenAPI spec for the API. If not set, a default spec is created.
 func WithOpenAPI(openAPI *OpenAPI) Option {
 	return func(a *api) {
 		a.openAPI = openAPI
@@ -443,12 +525,11 @@ func Register[I, O any](api API, route BaseRoute, handler func(context.Context, 
 		return fmt.Errorf("output type %s must be a struct", outputType)
 	}
 
-	// Initialize and register OpenAPI schemas
-	if err := registerOpenAPISchemas(api, &route, inputType, outputType); err != nil {
-		return err
-	}
+	// Build and register OpenAPI operation immediately during route registration
+	op := buildOpenapiOperation(route.Method, route.Path, inputType, outputType, &route)
+	api.addOperationToState(op)
 
-	// Create and register HTTP handler
+	// Create and register HTTP handler (routing logic remains unchanged)
 	httpHandler := createRequestHandler(api, &route, handler)
 
 	// Build middleware chain:
@@ -467,52 +548,6 @@ func Register[I, O any](api API, route BaseRoute, handler func(context.Context, 
 	api.Adapter().Handle(&route, finalHandler.ServeHTTP)
 
 	return nil
-}
-
-// registerOpenAPISchemas registers the OpenAPI schemas for input and output types.
-func registerOpenAPISchemas(api API, route *BaseRoute, inputType, outputType reflect.Type) error {
-	// Initialize operation if needed
-	if route.Operation == nil {
-		route.Operation = &Operation{}
-	}
-	op := route.Operation
-
-	// Add operation to OpenAPI Paths
-	if err := addOperationToPath(api.OpenAPI(), route.Path, route.Method, op); err != nil {
-		return err
-	}
-
-	// Extract OpenAPI request schema (parameters + request body)
-	if err := api.RequestSchemaExtractor().RequestFromType(inputType, op); err != nil {
-		return fmt.Errorf("failed to extract request schema: %w", err)
-	}
-
-	// Extract security requirements
-	api.RequestSchemaExtractor().ExtractSecurity(route, op)
-
-	// Extract OpenAPI response schema (success + error responses)
-	if err := api.ResponseSchemaExtractor().ResponseFromType(outputType, route); err != nil {
-		return fmt.Errorf("failed to extract response schema: %w", err)
-	}
-
-	// Sync registry schemas to OpenAPI Components
-	maps.Copy(api.OpenAPI().Components.Schemas, api.Registry().Map())
-
-	return nil
-}
-
-// addOperationToPath adds an operation to the OpenAPI paths.
-func addOperationToPath(openAPI *OpenAPI, path, method string, op *Operation) error {
-	if openAPI.Paths == nil {
-		openAPI.Paths = make(map[string]*PathItem)
-	}
-	pathItem := openAPI.Paths[path]
-	if pathItem == nil {
-		pathItem = &PathItem{}
-		openAPI.Paths[path] = pathItem
-	}
-
-	return setPathItemOperation(pathItem, method, op)
 }
 
 // createRequestHandler creates the HTTP handler for processing requests.
@@ -541,7 +576,11 @@ func createRequestHandler[I, O any](api API, route *BaseRoute, handler func(cont
 		}
 
 		// Transform and write response
-		if err := transformAndWriteResponse(api, r, w, output); err != nil {
+		defaultStatus := route.DefaultStatus
+		if defaultStatus == 0 {
+			defaultStatus = http.StatusOK
+		}
+		if err := transformAndWriteResponse(api, r, w, output, defaultStatus); err != nil {
 			return // Error already written
 		}
 	}
@@ -561,8 +600,8 @@ func decodeAndValidateRequest[I any](api API, r *http.Request, routerParams map[
 }
 
 // transformAndWriteResponse transforms the output and writes the response.
-func transformAndWriteResponse[O any](api API, r *http.Request, w http.ResponseWriter, output *O) error {
-	statusCode := http.StatusOK
+func transformAndWriteResponse[O any](api API, r *http.Request, w http.ResponseWriter, output *O, defaultStatus int) error {
+	statusCode := defaultStatus
 	transformed, err := api.Transform(r, statusCode, output)
 	if err != nil {
 		WriteErr(api, r, w, http.StatusInternalServerError, "transformer error", err)
@@ -627,32 +666,6 @@ func Patch[I, O any](api API, path string, handler func(context.Context, *I) (*O
 // and errors represent programming/configuration mistakes.
 func Head[I, O any](api API, path string, handler func(context.Context, *I) (*O, error), options ...func(*BaseRoute)) {
 	convenience(api, http.MethodHead, path, handler, options...)
-}
-
-// setPathItemOperation sets the operation on a PathItem based on the HTTP method.
-func setPathItemOperation(pathItem *PathItem, method string, op *Operation) error {
-	switch method {
-	case http.MethodGet:
-		pathItem.Get = op
-	case http.MethodPost:
-		pathItem.Post = op
-	case http.MethodPut:
-		pathItem.Put = op
-	case http.MethodPatch:
-		pathItem.Patch = op
-	case http.MethodDelete:
-		pathItem.Delete = op
-	case http.MethodHead:
-		pathItem.Head = op
-	case http.MethodOptions:
-		pathItem.Options = op
-	case http.MethodTrace:
-		pathItem.Trace = op
-	default:
-		return fmt.Errorf("unsupported HTTP method: %s", method)
-	}
-
-	return nil
 }
 
 // convenience is a helper function used by Get, Post, Put, Delete, Patch, and Head.

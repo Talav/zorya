@@ -49,9 +49,7 @@ func validateRequest[I any](api API, r *http.Request, input *I) []error {
 
 	metadata, err := api.Metadata().GetStructMetadata(typ)
 	if err != nil {
-		// If we can't get metadata, skip validation rather than failing
-		// This allows validation to work even if metadata lookup fails
-		return nil
+		return []error{err}
 	}
 
 	return v.Validate(r.Context(), input, metadata)

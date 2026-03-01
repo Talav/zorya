@@ -94,13 +94,13 @@ func TestOpenAPIEndpoint_EndToEnd(t *testing.T) {
     "schemas": {
       "ErrorDetail": {
         "properties": {
-          "Code": {
+          "code": {
             "type": "string"
           },
-          "Location": {
+          "location": {
             "type": "string"
           },
-          "Message": {
+          "message": {
             "type": "string"
           }
         },
@@ -108,29 +108,26 @@ func TestOpenAPIEndpoint_EndToEnd(t *testing.T) {
       },
       "ErrorModel": {
         "properties": {
-          "Detail": {
+          "detail": {
             "type": "string"
           },
-          "Errors": {
+          "errors": {
             "items": {
               "$ref": "#/components/schemas/ErrorDetail"
             },
-            "type": [
-              "array",
-              "null"
-            ]
+            "type": "array"
           },
-          "Instance": {
+          "instance": {
             "type": "string"
           },
-          "Status": {
+          "status": {
             "format": "int64",
             "type": "integer"
           },
-          "Title": {
+          "title": {
             "type": "string"
           },
-          "Type": {
+          "type": {
             "type": "string"
           }
         },
@@ -138,11 +135,11 @@ func TestOpenAPIEndpoint_EndToEnd(t *testing.T) {
       },
       "GetUserOutputBody": {
         "properties": {
-          "ID": {
+          "id": {
             "format": "int64",
             "type": "integer"
           },
-          "Name": {
+          "name": {
             "type": "string"
           }
         },
@@ -154,13 +151,12 @@ func TestOpenAPIEndpoint_EndToEnd(t *testing.T) {
     "title": "API",
     "version": "1.0.0"
   },
-  "openapi": "3.1.0",
+  "openapi": "3.1.2",
   "paths": {
     "/users/{id}": {
       "get": {
         "parameters": [
           {
-            "explode": false,
             "in": "path",
             "name": "id",
             "required": true,
@@ -274,13 +270,13 @@ func TestOpenAPIEndpoint_FileUpload(t *testing.T) {
     "schemas": {
       "ErrorDetail": {
         "properties": {
-          "Code": {
+          "code": {
             "type": "string"
           },
-          "Location": {
+          "location": {
             "type": "string"
           },
-          "Message": {
+          "message": {
             "type": "string"
           }
         },
@@ -288,29 +284,26 @@ func TestOpenAPIEndpoint_FileUpload(t *testing.T) {
       },
       "ErrorModel": {
         "properties": {
-          "Detail": {
+          "detail": {
             "type": "string"
           },
-          "Errors": {
+          "errors": {
             "items": {
               "$ref": "#/components/schemas/ErrorDetail"
             },
-            "type": [
-              "array",
-              "null"
-            ]
+            "type": "array"
           },
-          "Instance": {
+          "instance": {
             "type": "string"
           },
-          "Status": {
+          "status": {
             "format": "int64",
             "type": "integer"
           },
-          "Title": {
+          "title": {
             "type": "string"
           },
-          "Type": {
+          "type": {
             "type": "string"
           }
         },
@@ -318,14 +311,14 @@ func TestOpenAPIEndpoint_FileUpload(t *testing.T) {
       },
       "UploadFileOutputBody": {
         "properties": {
-          "Filename": {
+          "filename": {
             "type": "string"
           },
-          "ID": {
+          "id": {
             "format": "int64",
             "type": "integer"
           },
-          "Size": {
+          "size": {
             "format": "int64",
             "type": "integer"
           }
@@ -338,14 +331,13 @@ func TestOpenAPIEndpoint_FileUpload(t *testing.T) {
     "title": "API",
     "version": "1.0.0"
   },
-  "openapi": "3.1.0",
+  "openapi": "3.1.2",
   "paths": {
     "/resources/{resource_id}/files": {
       "post": {
         "parameters": [
           {
             "description": "ID of the resource to upload to",
-            "explode": false,
             "in": "path",
             "name": "resource_id",
             "required": true,
@@ -369,25 +361,24 @@ func TestOpenAPIEndpoint_FileUpload(t *testing.T) {
           "content": {
             "multipart/form-data": {
               "encoding": {
-                "File": {
+                "file": {
                   "contentType": "application/octet-stream"
                 }
               },
               "schema": {
                 "properties": {
-                  "Description": {
+                  "description": {
                     "description": "Optional file description",
                     "title": "Description",
                     "type": "string"
                   },
-                  "File": {
-                    "contentMediaType": "application/octet-stream",
+                  "file": {
                     "description": "File content",
                     "format": "binary",
                     "title": "File",
                     "type": "string"
                   },
-                  "Filename": {
+                  "filename": {
                     "description": "Name of the file",
                     "title": "Filename",
                     "type": "string"
@@ -494,13 +485,13 @@ func TestOpenAPIEndpoint_FileDownload(t *testing.T) {
     "schemas": {
       "ErrorDetail": {
         "properties": {
-          "Code": {
+          "code": {
             "type": "string"
           },
-          "Location": {
+          "location": {
             "type": "string"
           },
-          "Message": {
+          "message": {
             "type": "string"
           }
         },
@@ -508,29 +499,26 @@ func TestOpenAPIEndpoint_FileDownload(t *testing.T) {
       },
       "ErrorModel": {
         "properties": {
-          "Detail": {
+          "detail": {
             "type": "string"
           },
-          "Errors": {
+          "errors": {
             "items": {
               "$ref": "#/components/schemas/ErrorDetail"
             },
-            "type": [
-              "array",
-              "null"
-            ]
+            "type": "array"
           },
-          "Instance": {
+          "instance": {
             "type": "string"
           },
-          "Status": {
+          "status": {
             "format": "int64",
             "type": "integer"
           },
-          "Title": {
+          "title": {
             "type": "string"
           },
-          "Type": {
+          "type": {
             "type": "string"
           }
         },
@@ -542,13 +530,12 @@ func TestOpenAPIEndpoint_FileDownload(t *testing.T) {
     "title": "API",
     "version": "1.0.0"
   },
-  "openapi": "3.1.0",
+  "openapi": "3.1.2",
   "paths": {
     "/files/{file_id}": {
       "get": {
         "parameters": [
           {
-            "explode": false,
             "in": "path",
             "name": "file_id",
             "required": true,
@@ -563,7 +550,6 @@ func TestOpenAPIEndpoint_FileDownload(t *testing.T) {
             "content": {
               "application/octet-stream": {
                 "schema": {
-                  "contentMediaType": "application/octet-stream",
                   "format": "binary",
                   "type": "string"
                 }
@@ -675,13 +661,13 @@ func TestOpenAPIEndpoint_FileInResponse(t *testing.T) {
     "schemas": {
       "ErrorDetail": {
         "properties": {
-          "Code": {
+          "code": {
             "type": "string"
           },
-          "Location": {
+          "location": {
             "type": "string"
           },
-          "Message": {
+          "message": {
             "type": "string"
           }
         },
@@ -689,29 +675,26 @@ func TestOpenAPIEndpoint_FileInResponse(t *testing.T) {
       },
       "ErrorModel": {
         "properties": {
-          "Detail": {
+          "detail": {
             "type": "string"
           },
-          "Errors": {
+          "errors": {
             "items": {
               "$ref": "#/components/schemas/ErrorDetail"
             },
-            "type": [
-              "array",
-              "null"
-            ]
+            "type": "array"
           },
-          "Instance": {
+          "instance": {
             "type": "string"
           },
-          "Status": {
+          "status": {
             "format": "int64",
             "type": "integer"
           },
-          "Title": {
+          "title": {
             "type": "string"
           },
-          "Type": {
+          "type": {
             "type": "string"
           }
         },
@@ -719,24 +702,24 @@ func TestOpenAPIEndpoint_FileInResponse(t *testing.T) {
       },
       "GetFileWithMetadataOutputBody": {
         "properties": {
-          "ContentType": {
+          "content_type": {
             "type": "string"
           },
-          "File": {
+          "file": {
             "contentEncoding": "base64",
             "contentMediaType": "application/octet-stream",
             "description": "File content",
             "title": "File",
             "type": "string"
           },
-          "Filename": {
+          "filename": {
             "type": "string"
           },
-          "ID": {
+          "id": {
             "format": "int64",
             "type": "integer"
           },
-          "Size": {
+          "size": {
             "format": "int64",
             "type": "integer"
           }
@@ -749,13 +732,12 @@ func TestOpenAPIEndpoint_FileInResponse(t *testing.T) {
     "title": "API",
     "version": "1.0.0"
   },
-  "openapi": "3.1.0",
+  "openapi": "3.1.2",
   "paths": {
     "/files/{file_id}/with-metadata": {
       "get": {
         "parameters": [
           {
-            "explode": false,
             "in": "path",
             "name": "file_id",
             "required": true,
@@ -904,7 +886,7 @@ func TestOpenAPIEndpoint_ComprehensiveValidations(t *testing.T) {
     "schemas": {
       "ComprehensiveValidationBody": {
         "properties": {
-          "ArrayLen": {
+          "array_len": {
             "description": "Array with exact length",
             "items": {
               "type": "string"
@@ -912,12 +894,9 @@ func TestOpenAPIEndpoint_ComprehensiveValidations(t *testing.T) {
             "maxItems": 5,
             "minItems": 5,
             "title": "Array Len",
-            "type": [
-              "array",
-              "null"
-            ]
+            "type": "array"
           },
-          "ArrayMinMax": {
+          "array_min_max": {
             "description": "Array with min and max items",
             "items": {
               "type": "string"
@@ -925,12 +904,9 @@ func TestOpenAPIEndpoint_ComprehensiveValidations(t *testing.T) {
             "maxItems": 10,
             "minItems": 1,
             "title": "Array Min Max",
-            "type": [
-              "array",
-              "null"
-            ]
+            "type": "array"
           },
-          "ArrayOneOf": {
+          "array_oneof": {
             "description": "Array with enum items",
             "items": {
               "enum": [
@@ -941,113 +917,108 @@ func TestOpenAPIEndpoint_ComprehensiveValidations(t *testing.T) {
               "type": "string"
             },
             "title": "Array OneOf",
-            "type": [
-              "array",
-              "null"
-            ]
+            "type": "array"
           },
-          "FloatGtLt": {
+          "float_gt_lt": {
             "description": "Float with gt and lt",
             "exclusiveMaximum": 99.9,
             "exclusiveMinimum": 0.1,
             "title": "Float Gt Lt",
             "type": "number"
           },
-          "FloatGteLte": {
+          "float_gte_lte": {
             "description": "Float with gte and lte",
             "maximum": 99.5,
             "minimum": 10.5,
             "title": "Float Gte Lte",
             "type": "number"
           },
-          "FloatMinMax": {
+          "float_min_max": {
             "description": "Float with min and max",
             "maximum": 100,
             "minimum": 0,
             "title": "Float Min Max",
             "type": "number"
           },
-          "FloatMultipleOf": {
+          "float_multiple_of": {
             "description": "Float multiple of 0.5",
             "multipleOf": 0.5,
             "title": "Float Multiple Of",
             "type": "number"
           },
-          "IntGtLt": {
+          "int_gt_lt": {
             "description": "Integer with gt and lt",
             "exclusiveMaximum": 95,
             "exclusiveMinimum": 5,
             "title": "Int Gt Lt",
             "type": "integer"
           },
-          "IntGteLte": {
+          "int_gte_lte": {
             "description": "Integer with gte and lte",
             "maximum": 50,
             "minimum": 10,
             "title": "Int Gte Lte",
             "type": "integer"
           },
-          "IntMinMax": {
+          "int_min_max": {
             "description": "Integer with min and max",
             "maximum": 100,
             "minimum": 0,
             "title": "Int Min Max",
             "type": "integer"
           },
-          "IntMultipleOf": {
+          "int_multiple_of": {
             "description": "Integer multiple of 5",
             "multipleOf": 5,
             "title": "Int Multiple Of",
             "type": "integer"
           },
-          "IntRequired": {
+          "int_required": {
             "description": "Required integer pointer",
             "title": "Int Required",
             "type": "integer"
           },
-          "Nested": {
-            "$ref": "#/components/schemas/NestedValidationStruct",
-            "description": "Nested struct with validations",
-            "title": "Nested"
+          "nested": {
+            "$ref": "#/components/schemas/NestedValidationStruct"
           },
-          "RequiredField": {
+          "required_field": {
             "description": "This field is required",
             "title": "Required Field",
             "type": "string"
           },
-          "StringAlpha": {
+          "string_alpha": {
             "description": "Alphabetic characters only",
             "pattern": "^[a-zA-Z]+$",
             "title": "Alpha",
             "type": "string"
           },
-          "StringAlphanum": {
+          "string_alphanum": {
             "description": "Alphanumeric characters only",
             "pattern": "^[a-zA-Z0-9]+$",
             "title": "Alphanum",
             "type": "string"
           },
-          "StringEmail": {
+          "string_email": {
             "description": "Valid email address",
             "format": "email",
             "title": "Email",
             "type": "string"
           },
-          "StringLen": {
+          "string_len": {
             "description": "String with exact length",
             "maxLength": 10,
             "minLength": 10,
             "title": "String Len",
             "type": "string"
           },
-          "StringMinMax": {
+          "string_min_max": {
             "description": "String with min and max length",
             "maxLength": 100,
             "minLength": 5,
             "title": "String Min Max",
             "type": "string"
           },
-          "StringOneOf": {
+          "string_oneof": {
             "description": "Status enum",
             "enum": [
               "active",
@@ -1057,13 +1028,13 @@ func TestOpenAPIEndpoint_ComprehensiveValidations(t *testing.T) {
             "title": "Status",
             "type": "string"
           },
-          "StringPattern": {
+          "string_pattern": {
             "description": "Custom pattern validation",
             "pattern": "^[A-Z][a-z]+$",
             "title": "Pattern",
             "type": "string"
           },
-          "StringURL": {
+          "string_url": {
             "description": "Valid URL",
             "format": "uri",
             "title": "URL",
@@ -1071,20 +1042,20 @@ func TestOpenAPIEndpoint_ComprehensiveValidations(t *testing.T) {
           }
         },
         "required": [
-          "RequiredField",
-          "StringEmail",
-          "IntRequired",
-          "Nested"
+          "required_field",
+          "string_email",
+          "int_required",
+          "nested"
         ],
         "type": "object"
       },
       "ComprehensiveValidationOutputBody": {
         "properties": {
-          "ID": {
+          "id": {
             "format": "int64",
             "type": "integer"
           },
-          "Message": {
+          "message": {
             "type": "string"
           }
         },
@@ -1092,13 +1063,13 @@ func TestOpenAPIEndpoint_ComprehensiveValidations(t *testing.T) {
       },
       "ErrorDetail": {
         "properties": {
-          "Code": {
+          "code": {
             "type": "string"
           },
-          "Location": {
+          "location": {
             "type": "string"
           },
-          "Message": {
+          "message": {
             "type": "string"
           }
         },
@@ -1106,29 +1077,26 @@ func TestOpenAPIEndpoint_ComprehensiveValidations(t *testing.T) {
       },
       "ErrorModel": {
         "properties": {
-          "Detail": {
+          "detail": {
             "type": "string"
           },
-          "Errors": {
+          "errors": {
             "items": {
               "$ref": "#/components/schemas/ErrorDetail"
             },
-            "type": [
-              "array",
-              "null"
-            ]
+            "type": "array"
           },
-          "Instance": {
+          "instance": {
             "type": "string"
           },
-          "Status": {
+          "status": {
             "format": "int64",
             "type": "integer"
           },
-          "Title": {
+          "title": {
             "type": "string"
           },
-          "Type": {
+          "type": {
             "type": "string"
           }
         },
@@ -1136,14 +1104,14 @@ func TestOpenAPIEndpoint_ComprehensiveValidations(t *testing.T) {
       },
       "NestedValidationStruct": {
         "properties": {
-          "Name": {
+          "name": {
             "description": "Nested name field",
             "maxLength": 50,
             "minLength": 3,
             "title": "Name",
             "type": "string"
           },
-          "Value": {
+          "value": {
             "description": "Nested value field",
             "maximum": 100,
             "minimum": 1,
@@ -1152,7 +1120,7 @@ func TestOpenAPIEndpoint_ComprehensiveValidations(t *testing.T) {
           }
         },
         "required": [
-          "Name"
+          "name"
         ],
         "type": "object"
       }
@@ -1162,13 +1130,12 @@ func TestOpenAPIEndpoint_ComprehensiveValidations(t *testing.T) {
     "title": "API",
     "version": "1.0.0"
   },
-  "openapi": "3.1.0",
+  "openapi": "3.1.2",
   "paths": {
     "/resources/{resource_id}/validate": {
       "post": {
         "parameters": [
           {
-            "explode": false,
             "in": "path",
             "name": "resource_id",
             "required": true,
@@ -1262,4 +1229,54 @@ func TestDocsEndpoint_EndToEnd(t *testing.T) {
 	assert.Contains(t, htmlBody, "apiDescriptionUrl", "Response should contain apiDescriptionUrl attribute")
 	assert.Contains(t, htmlBody, "/openapi.json", "Response should reference OpenAPI spec at /openapi.json")
 	assert.Contains(t, htmlBody, "@stoplight/elements", "Response should include Stoplight Elements from CDN")
+}
+
+func TestDocsEndpoint_OpenAPIPathNoDoubleJson(t *testing.T) {
+	router := chi.NewMux()
+	adapter := &testChiAdapter{router: router}
+	cfg := DefaultConfig()
+	cfg.OpenAPIPath = "/openapi.json"
+	api := NewAPI(adapter, WithConfig(cfg))
+
+	Get(api, "/users/{id}", func(ctx context.Context, input *GetUserInput) (*GetUserOutput, error) {
+		return &GetUserOutput{}, nil
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/docs", nil)
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, req)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	htmlBody := recorder.Body.String()
+	assert.Contains(t, htmlBody, `apiDescriptionUrl="/openapi.json"`, "apiDescriptionUrl must use OpenAPIPath as-is")
+	assert.NotContains(t, htmlBody, ".json.json", "apiDescriptionUrl must not have double .json extension")
+}
+
+func TestStreamingBodyFunc(t *testing.T) {
+	type StreamingOutput struct {
+		Body func(w http.ResponseWriter) error
+	}
+
+	router := chi.NewMux()
+	adapter := &testChiAdapter{router: router}
+	api := NewAPI(adapter)
+
+	Get(api, "/stream", func(ctx context.Context, _ *struct{}) (*StreamingOutput, error) {
+		out := &StreamingOutput{}
+		out.Body = func(w http.ResponseWriter) error {
+			w.Header().Set("Content-Type", "text/event-stream")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("data: hello\n\n"))
+			return nil
+		}
+		return out, nil
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/stream", nil)
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, req)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, "text/event-stream", recorder.Header().Get("Content-Type"))
+	assert.Contains(t, recorder.Body.String(), "data: hello")
 }

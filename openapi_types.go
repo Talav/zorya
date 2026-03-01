@@ -2,13 +2,15 @@ package zorya
 
 import (
 	"encoding/json"
-	"net"
-	"net/netip"
-	"net/url"
 	"reflect"
 	"regexp"
-	"time"
 )
+
+// ContentTypeProvider allows types to override their content type.
+// For example, ErrorModel implements this to return "application/problem+json".
+type ContentTypeProvider interface {
+	ContentType(string) string
+}
 
 type omitType int
 
@@ -25,14 +27,6 @@ const (
 
 	// Format constants for binary data.
 	formatBinary = "binary"
-)
-
-// Special JSON Schema formats.
-var (
-	timeType   = reflect.TypeOf(time.Time{})
-	ipType     = reflect.TypeOf(net.IP{})
-	ipAddrType = reflect.TypeOf(netip.Addr{})
-	urlType    = reflect.TypeOf(url.URL{})
 )
 
 // JSON Schema type constants.
@@ -1395,8 +1389,6 @@ func (t *Tag) MarshalJSON() ([]byte, error) {
 	}, t.Extensions)
 }
 
-type AddOpFunc func(oapi *OpenAPI, op *Operation)
-
 // OpenAPI is the root object of the OpenAPI document.
 type OpenAPI struct {
 	// OpenAPI is REQUIRED. This string MUST be the version number of the OpenAPI
@@ -1456,53 +1448,7 @@ type OpenAPI struct {
 	// Extensions (user-defined properties), if any. Values in this map will
 	// be marshalled as siblings of the other properties above.
 	Extensions map[string]any
-
-	// OnAddOperation is called when an operation is added to the OpenAPI via
-	// `AddOperation`. You may bypass this by directly writing to the `Paths`
-	// map instead.
-	OnAddOperation []AddOpFunc
 }
-
-// AddOperation adds an operation to the OpenAPI. This is the preferred way to
-// add operations to the OpenAPI, as it will ensure that the operation is
-// properly added to the Paths map, and will call any registered OnAddOperation
-// functions.
-// func (o *OpenAPI) AddOperation(op *Operation) {
-// 	if o.Paths == nil {
-// 		o.Paths = map[string]*PathItem{}
-// 	}
-
-// 	item := o.Paths[op.Path]
-// 	if item == nil {
-// 		item = &PathItem{}
-// 		o.Paths[op.Path] = item
-// 	}
-
-// 	switch op.Method {
-// 	case http.MethodGet:
-// 		item.Get = op
-// 	case http.MethodPost:
-// 		item.Post = op
-// 	case http.MethodPut:
-// 		item.Put = op
-// 	case http.MethodPatch:
-// 		item.Patch = op
-// 	case http.MethodDelete:
-// 		item.Delete = op
-// 	case http.MethodHead:
-// 		item.Head = op
-// 	case http.MethodOptions:
-// 		item.Options = op
-// 	case http.MethodTrace:
-// 		item.Trace = op
-// 	default:
-// 		panic("unknown method " + op.Method)
-// 	}
-
-// 	for _, f := range o.OnAddOperation {
-// 		f(o, op)
-// 	}
-// }
 
 func (o *OpenAPI) MarshalJSON() ([]byte, error) {
 	return marshalJSON([]jsonFieldInfo{
@@ -1519,6 +1465,7 @@ func (o *OpenAPI) MarshalJSON() ([]byte, error) {
 	}, o.Extensions)
 }
 
+// DefaultOpenAPI returns a new OpenAPI 3.1 document with the given title and version.
 func DefaultOpenAPI(title, version string) *OpenAPI {
 	return &OpenAPI{
 		OpenAPI: "3.1.0",
@@ -1528,17 +1475,6 @@ func DefaultOpenAPI(title, version string) *OpenAPI {
 		},
 	}
 }
-
-// YAML returns the OpenAPI represented as YAML without needing to include a
-// library to serialize YAML.
-// func (o *OpenAPI) YAML() ([]byte, error) {
-// 	specJSON, err := json.Marshal(o)
-// 	buf := bytes.NewBuffer([]byte{})
-// 	if err == nil {
-// 		err = yaml.Convert(buf, bytes.NewReader(specJSON))
-// 	}
-// 	return buf.Bytes(), err
-// }
 
 // Schema represents a JSON Schema compatible with OpenAPI 3.1. It is extensible
 // with your own custom properties. It supports a subset of the full JSON Schema

@@ -31,10 +31,8 @@ type Config struct {
 
 // DefaultConfig returns a default configuration for a new API. It is a good
 // starting point for creating your own configuration. It supports the JSON
-// format out of the box. The registry uses references for structs and a link
-// transformer is included to add `$schema` fields and links into responses. The
-// `/openapi.json`, `/docs`, and `/schemas` paths are set up to serve the
-// OpenAPI spec, docs UI, and schemas respectively.
+// format out of the box. The `/openapi.json`, `/docs`, and `/schemas` paths
+// are set up to serve the OpenAPI spec, docs UI, and schemas respectively.
 //
 //	// Create and customize the config (if desired).
 //	config := zorya.DefaultConfig()

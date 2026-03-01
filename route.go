@@ -11,7 +11,7 @@ const DefaultMaxBodyBytes int64 = 1024 * 1024
 // DefaultBodyReadTimeout is the default timeout for reading request bodies (5 seconds).
 const DefaultBodyReadTimeout = 5 * time.Second
 
-// BaseRoute is the base struct for all routes in Fuego.
+// BaseRoute is the base struct for all routes in Zorya.
 // It contains the OpenAPI operation and other metadata.
 type BaseRoute struct {
 	// OpenAPI operation

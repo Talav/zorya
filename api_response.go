@@ -108,7 +108,7 @@ func writeBody(api API, r *http.Request, w http.ResponseWriter, vo reflect.Value
 
 	// Check if Body is a function
 	if isBodyFunc(bodyFieldMeta.Type) {
-		writeBodyFunc(w, r, bodyField, status)
+		writeBodyFunc(api, w, r, bodyField, status)
 
 		return
 	}
@@ -126,14 +126,28 @@ func writeBody(api API, r *http.Request, w http.ResponseWriter, vo reflect.Value
 }
 
 // writeBodyFunc executes a body callback function for streaming responses.
-// Status and headers from struct fields should already be set before this is called.
-func writeBodyFunc(w http.ResponseWriter, r *http.Request, bodyField reflect.Value, status int) {
-	// Set status before streaming starts
-	w.WriteHeader(status)
-
-	if fn, ok := bodyField.Interface().(func(http.ResponseWriter, *http.Request)); ok {
-		fn(w, r)
+// The function is responsible for setting headers and writing all data.
+func writeBodyFunc(api API, w http.ResponseWriter, r *http.Request, bodyField reflect.Value, status int) {
+	fn, ok := bodyField.Interface().(func(http.ResponseWriter) error)
+	if !ok {
+		return
 	}
+
+	tracker := &writeHeaderTracker{ResponseWriter: w}
+	if err := fn(tracker); err != nil && !tracker.written {
+		WriteErr(api, r, tracker.ResponseWriter, http.StatusInternalServerError, "Internal Server Error", err)
+	}
+}
+
+// writeHeaderTracker wraps http.ResponseWriter to detect if WriteHeader was called.
+type writeHeaderTracker struct {
+	http.ResponseWriter
+	written bool
+}
+
+func (t *writeHeaderTracker) WriteHeader(code int) {
+	t.written = true
+	t.ResponseWriter.WriteHeader(code)
 }
 
 // writeRawBody writes raw bytes without content negotiation.
@@ -185,24 +199,19 @@ func formatHeaderValue(v reflect.Value) string {
 }
 
 // isBodyFunc checks if the type is a valid body callback function and validates its signature.
+// Supports: func(http.ResponseWriter) error (streaming body, sets headers and writes data).
 func isBodyFunc(t reflect.Type) bool {
 	if t.Kind() != reflect.Func {
 		return false
 	}
 
-	// Validate function signature: func(http.ResponseWriter, *http.Request).
-	if t.NumIn() != 2 || t.NumOut() != 0 {
-		return false
-	}
-
-	// Check if parameters match http.ResponseWriter and *http.Request.
-	// We check by comparing with reflect types
 	httpResponseWriterType := reflect.TypeOf((*http.ResponseWriter)(nil)).Elem()
-	httpRequestType := reflect.TypeOf((*http.Request)(nil))
+	errorType := reflect.TypeOf((*error)(nil)).Elem()
 
-	if !t.In(0).Implements(httpResponseWriterType) || t.In(1) != httpRequestType {
-		return false
+	// func(http.ResponseWriter) error
+	if t.NumIn() == 1 && t.NumOut() == 1 {
+		return t.In(0).Implements(httpResponseWriterType) && t.Out(0).Implements(errorType)
 	}
 
-	return true
+	return false
 }

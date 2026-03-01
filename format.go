@@ -7,7 +7,7 @@ import (
 	"github.com/fxamacker/cbor/v2"
 )
 
-// Format defines a marshal function for a content type.
+// Format defines how to marshal values for a given content type (e.g., application/json).
 type Format struct {
 	Marshal func(w io.Writer, v any) error
 }
@@ -26,9 +26,12 @@ func JSONFormat() Format {
 
 // CBORFormat returns a Format for application/cbor.
 func CBORFormat() Format {
-	encMode, _ := cbor.EncOptions{
+	encMode, err := cbor.EncOptions{
 		Time: cbor.TimeRFC3339,
 	}.EncMode()
+	if err != nil {
+		panic("zorya: CBOR enc mode setup failed: " + err.Error())
+	}
 
 	return Format{
 		Marshal: func(w io.Writer, v any) error {
